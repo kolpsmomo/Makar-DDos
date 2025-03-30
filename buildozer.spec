@@ -1,7 +1,7 @@
 [app]
 
 # (str) Title of your application
-title = Makar DDos
+title = Aspect DDos
 
 # (str) Package name
 package.name = ru.aspect_series.myapp
