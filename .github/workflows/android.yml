@@ -1,55 +1,71 @@
-name: Build Android APK
+name: Build APK with Python 3.8
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 jobs:
   build:
-    runs-on: ubuntu-20.04  # Используем Ubuntu 20.04 для Python 3.8
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.8
       uses: actions/setup-python@v4
       with:
         python-version: '3.8'
-        
+
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+            python3-dev \
             python3-pip \
-            openjdk-8-jdk \  # Java 8 для совместимости
+            openjdk-8-jdk \
             zlib1g-dev \
             libncurses5-dev \
-            libtinfo5 \      # Правильное имя для Ubuntu 20.04
+            libtinfo5 \
             git \
             unzip \
-            zip
-        
-    - name: Install Buildozer and dependencies
+            zip \
+            libssl-dev \
+            libffi-dev \
+            libxml2-dev \
+            libxslt1-dev
+
+    - name: Install Buildozer with dependencies
       run: |
         python -m pip install --upgrade pip wheel
         pip install cython==0.29.33
-        pip install buildozer==1.4.0  # Проверенная версия
-        
-    - name: Initialize Buildozer
+        pip install buildozer==1.4.0
+
+    - name: Configure buildozer.spec
       run: |
         buildozer init
         echo "[app]
-        requirements = python3==3.8.10,kivy
-        android.ndk = 19c  # Используем старую версию NDK для совместимости
+        title = MyApp
+        package.name = myapp
+        package.domain = org.test
+        source.dir = .
+        version = 0.1
+        requirements = python3==3.8.10,kivy,requests,urllib3,chardet,idna,certifi
+        android.permissions = INTERNET
+        android.api = 28
+        android.minapi = 21
+        android.ndk = 19c
+        android.sdk = 28
+        android.accept_sdk_license = true
         " > buildozer.spec
-        
-    - name: Build APK
+
+    - name: Build debug APK
       run: |
         buildozer -v android debug
-        
-    - name: Upload APK
+
+    - name: Upload APK artifact
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: bin/*.apk
+        if-no-files-found: error
