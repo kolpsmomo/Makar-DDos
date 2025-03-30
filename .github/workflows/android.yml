@@ -1,4 +1,4 @@
-name: Build APK with Python 3.8
+name: Build Android APK
 
 on:
   push:
@@ -31,41 +31,19 @@ jobs:
             unzip \
             zip \
             libssl-dev \
-            libffi-dev \
-            libxml2-dev \
-            libxslt1-dev
+            libffi-dev
 
-    - name: Install Buildozer with dependencies
+    - name: Install Buildozer
       run: |
         python -m pip install --upgrade pip wheel
-        pip install cython==0.29.33
-        pip install buildozer==1.4.0
+        pip install cython==0.29.33 buildozer==1.4.0
 
-    - name: Configure buildozer.spec
-      run: |
-        buildozer init
-        echo "[app]
-        title = MyApp
-        package.name = myapp
-        package.domain = org.test
-        source.dir = .
-        version = 0.1
-        requirements = python3==3.8.10,kivy,requests,urllib3,chardet,idna,certifi
-        android.permissions = INTERNET
-        android.api = 28
-        android.minapi = 21
-        android.ndk = 19c
-        android.sdk = 28
-        android.accept_sdk_license = true
-        " > buildozer.spec
-
-    - name: Build debug APK
+    - name: Build APK
       run: |
         buildozer -v android debug
 
-    - name: Upload APK artifact
+    - name: Upload APK
       uses: actions/upload-artifact@v4
       with:
         name: app-debug
         path: bin/*.apk
-        if-no-files-found: error
