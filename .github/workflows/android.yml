@@ -2,29 +2,57 @@ name: Build Android APK
 
 on:
   push:
-    branches: [ main ] # Запускать при push в ветку main
+    branches: [ main ]
   pull_request:
-    branches: [ main ] # Запускать при создании pull request в ветку main
+    branches: [ main ]
+
+env:
+  USE_SDK_WRAPPER: 1
+  ANDROID_SDK_ROOT: /usr/lib/android-sdk
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Используем Ubuntu
-
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3 # Клонируем репозиторий
-      - name: Set up Python 3.9 # Устанавливаем Python
-        uses: actions/setup-python@v3
-        with:
-          python-version: 3.8
-      - name: Install dependencies # Устанавливаем Buildozer и другие зависимости
-        run: |
-          python -m pip install --upgrade pip
-          pip install buildozer
-      - name: Buildozer android debug # Собираем APK
-        run: |
-          buildozer android debug
-      - name: Upload APK # Загружаем APK в качестве артефакта
-        uses: actions/upload-artifact@v3
-        with:
-          name: app-debug.apk
-          path: bin/*.apk
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.8'
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+            python3-pip \
+            openjdk-17-jdk \
+            zlib1g-dev \
+            libncurses5-dev \
+            libtinfo5 \
+            git \
+            unzip \
+            zip
+
+    - name: Install Buildozer and dependencies
+      run: |
+        python -m pip install --upgrade pip wheel
+        pip install cython==0.29.33 buildozer
+
+    - name: Configure Buildozer
+      run: |
+        buildozer init
+        # Убедитесь что buildozer.spec существует
+        [ ! -f buildozer.spec ] && echo "[app]\nrequirements = python3,kivy" > buildozer.spec
+
+    - name: Build APK
+      run: |
+        buildozer -v android debug
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug
+        path: bin/*.apk
+        if-no-files-found: error
