@@ -8,37 +8,44 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04  # Используем Ubuntu 20.04 для Python 3.8
     steps:
     - uses: actions/checkout@v4
     
-    - name: Set up Python
+    - name: Set up Python 3.8
       uses: actions/setup-python@v4
       with:
-        python-version: '3.10'
+        python-version: '3.8'
         
     - name: Install system dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
             python3-pip \
-            openjdk-17-jdk \
+            openjdk-8-jdk \  # Java 8 для совместимости
             zlib1g-dev \
             libncurses5-dev \
-            libncursesw6-dev \  # Замена для libtinfo5 в Ubuntu 24.04
-            libtinfo6 \         # Альтернативный пакет
+            libtinfo5 \      # Правильное имя для Ubuntu 20.04
             git \
             unzip \
             zip
         
-    - name: Install Buildozer
+    - name: Install Buildozer and dependencies
       run: |
         python -m pip install --upgrade pip wheel
-        pip install cython==0.29.33 buildozer
+        pip install cython==0.29.33
+        pip install buildozer==1.4.0  # Проверенная версия
         
-    - name: Run Buildozer
+    - name: Initialize Buildozer
       run: |
         buildozer init
+        echo "[app]
+        requirements = python3==3.8.10,kivy
+        android.ndk = 19c  # Используем старую версию NDK для совместимости
+        " > buildozer.spec
+        
+    - name: Build APK
+      run: |
         buildozer -v android debug
         
     - name: Upload APK
