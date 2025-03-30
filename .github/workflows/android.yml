@@ -1,1 +1,30 @@
+name: Build Android APK
 
+on:
+  push:
+    branches: [ main ] # Запускать при push в ветку main
+  pull_request:
+    branches: [ main ] # Запускать при создании pull request в ветку main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest # Используем Ubuntu
+
+    steps:
+      - uses: actions/checkout@v3 # Клонируем репозиторий
+      - name: Set up Python 3.9 # Устанавливаем Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.8
+      - name: Install dependencies # Устанавливаем Buildozer и другие зависимости
+        run: |
+          python -m pip install --upgrade pip
+          pip install buildozer
+      - name: Buildozer android debug # Собираем APK
+        run: |
+          buildozer android debug
+      - name: Upload APK # Загружаем APK в качестве артефакта
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-debug.apk
+          path: bin/*.apk
